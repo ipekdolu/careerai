@@ -1,0 +1,28 @@
+John Smith
+john.smith@email.com | linkedin.com/in/johnsmith | github.com/johnsmith
+
+SUMMARY
+Junior Python developer with 2 years of experience building web applications and 
+automating data pipelines. Passionate about clean code and practical AI tools.
+
+EXPERIENCE
+
+Python Developer — DataFlow Solutions (2022–2024)
+- Built REST APIs using Flask to serve internal reporting dashboards
+- Automated data extraction from 3 third-party APIs, reducing manual work by 60%
+- Wrote Python scripts to clean and transform CSV datasets for analysis
+- Collaborated with a 4-person team using Git and GitHub for version control
+
+Freelance Web Developer (2021–2022)
+- Built 5 small business websites using HTML, CSS, and JavaScript
+- Integrated Stripe payment API for an e-commerce client
+
+SKILLS
+Python, Flask, REST APIs, Git, GitHub, SQL (basic), HTML, CSS, JavaScript,
+pandas, requests, JSON, Linux (basic)
+
+EDUCATION
+BSc Computer Science — University of Amsterdam (2021)
+
+LANGUAGES
+English (fluent), Dutch (native)

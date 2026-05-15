@@ -1,0 +1,28 @@
+Job Title: Junior Backend Developer
+Company: FinTech Startup (Berlin, hybrid)
+
+ABOUT THE ROLE
+We are looking for a junior backend developer to join our growing engineering team.
+You will build and maintain APIs, work with cloud infrastructure, and help integrate
+third-party financial data providers.
+
+RESPONSIBILITIES
+- Design and maintain RESTful APIs for our mobile and web clients
+- Integrate third-party financial APIs (market data, payment providers)
+- Write unit and integration tests for all new features
+- Deploy and monitor services on AWS
+- Collaborate in an agile team using Jira and GitHub
+
+REQUIREMENTS
+- 1–3 years of Python experience
+- Experience with FastAPI or Django (Flask is a plus)
+- Familiarity with SQL databases (PostgreSQL preferred)
+- Basic knowledge of AWS (EC2, S3, Lambda)
+- Experience writing unit tests (pytest)
+- Understanding of Docker and containerization
+- Strong communication skills in English
+
+NICE TO HAVE
+- Experience with Redis or message queues
+- Knowledge of financial data APIs
+- TypeScript or React experience
