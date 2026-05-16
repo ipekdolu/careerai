@@ -3,8 +3,8 @@ import re
 import json
 from dotenv import load_dotenv
 import anthropic
-from models import AnalysisResult, InterviewPrepResult
-from prompts import SYSTEM_PROMPT, INTERVIEW_PREP_PROMPT
+from models import AnalysisResult, InterviewPrepResult, AnswerFeedback, InterviewSummary
+from prompts import SYSTEM_PROMPT, INTERVIEW_PREP_PROMPT, EVALUATOR_PROMPT
  
 load_dotenv()
  
@@ -240,3 +240,150 @@ def interview_prep(job_description: str, resume_text: str = None) -> InterviewPr
  
     messages = [{"role": "user", "content": user_message}]
     return _run_tool_loop(messages, INTERVIEW_PREP_PROMPT, INTERVIEW_TOOLS, 2000, InterviewPrepResult)
+
+def start_interview(job_description: str, resume_text: str, focus: str) -> tuple[str, list]:
+    """Starts the interview — Claude generates the first question."""
+
+    resume_section = f"\n## Candidate Resume:\n{resume_text}" if resume_text else ""
+
+    system_context = f"""
+## Job Description:
+{job_description}
+{resume_section}
+
+## Interview Focus: {focus}
+## IMPORTANT: Stay strictly within the {focus} focus for all questions.
+## Do NOT introduce topics outside this focus area.
+## Covered Topics So Far: None
+
+You are starting the interview. Ask the first question.
+Make it specific to the candidate's background and the role.
+Since this is the first question, return a JSON object with exactly these keys:
+- next_question (string — the opening interview question)
+- topic_covered (string — short label for the topic)
+
+No preamble, no extra keys, just the JSON.
+"""
+
+    messages = [{"role": "user", "content": "Please begin the interview with your first question."}]
+
+    response = client.messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=500,
+        system=EVALUATOR_PROMPT + system_context,
+        messages=messages
+    )
+
+    raw_text = next((b.text for b in response.content if hasattr(b, "text")), "")
+    match = re.search(r"\{[\s\S]*\}", raw_text)
+    if not match:
+        raise ValueError(f"No JSON found: {raw_text[:200]}")
+
+    parsed = json.loads(match.group(0))
+    first_question = parsed["next_question"]
+    first_topic = parsed.get("topic_covered", "opening")
+
+    conversation_history = [
+        {"role": "assistant", "content": f"Q: {first_question}"}
+    ]
+
+    return first_question, conversation_history, first_topic
+
+
+def evaluate_answer(
+    question: str,
+    answer: str,
+    job_description: str,
+    resume_text: str,
+    covered_topics: list,
+    conversation_history: list,
+    focus: str
+) -> AnswerFeedback:
+    """Evaluates a candidate's answer and generates the next question."""
+
+    resume_section = f"\n## Candidate Resume:\n{resume_text}" if resume_text else ""
+    covered_str = ", ".join(covered_topics) if covered_topics else "None"
+
+    system_context = f"""
+## Job Description:
+{job_description}
+{resume_section}
+
+## Interview Focus: {focus}
+## IMPORTANT: You must stay within the {focus} focus for the entire interview.
+## Do NOT switch to technical questions if focus is Behavioral or Culture & Fit.
+## Do NOT switch topics outside the selected focus area under any circumstances.
+## Covered Topics So Far: {covered_str}
+
+Evaluate the candidate's answer and generate the next question.
+"""
+
+    messages = conversation_history + [
+        {
+            "role": "user",
+            "content": f"Q: {question}\nA: {answer}"
+        }
+    ]
+
+    response = client.messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=1000,
+        system=EVALUATOR_PROMPT + system_context,
+        messages=messages
+    )
+
+    raw_text = next((b.text for b in response.content if hasattr(b, "text")), "")
+
+    if not raw_text:
+        raise ValueError("Claude returned no text")
+
+    match = re.search(r"\{[\s\S]*\}", raw_text)
+    if not match:
+        raise ValueError(f"No JSON found: {raw_text[:200]}")
+
+    parsed = json.loads(match.group(0))
+    return AnswerFeedback(**parsed)
+
+
+def summarize_interview(
+    questions: list,
+    answers: list,
+    feedbacks: list
+) -> InterviewSummary:
+    """Generates a final summary after all interview questions are answered."""
+
+    qa_pairs = "\n\n".join([
+        f"Q: {q}\nA: {a}\nScore: {f.score}/10"
+        for q, a, f in zip(questions, answers, feedbacks)
+    ])
+
+    messages = [
+        {
+            "role": "user",
+            "content": f"""
+## Mock Interview Transcript:
+{qa_pairs}
+
+Generate a final interview summary assessment as JSON.
+"""
+        }
+    ]
+
+    response = client.messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=1000,
+        system=EVALUATOR_PROMPT,
+        messages=messages
+    )
+
+    raw_text = next((b.text for b in response.content if hasattr(b, "text")), "")
+
+    if not raw_text:
+        raise ValueError("Claude returned no text")
+
+    match = re.search(r"\{[\s\S]*\}", raw_text)
+    if not match:
+        raise ValueError(f"No JSON found: {raw_text[:200]}")
+
+    parsed = json.loads(match.group(0))
+    return InterviewSummary(**parsed)

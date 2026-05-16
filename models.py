@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field
 from typing import List
 
+
 class AnalysisResult(BaseModel):
     overall_fit_score: int = Field(
         description="Overall fit score from 0 to 100"
@@ -24,6 +25,7 @@ class AnalysisResult(BaseModel):
         description="One sentence summary of the overall fit"
     )
 
+
 class InterviewPrepResult(BaseModel):
     technical_questions: List[str] = Field(
         description="Likely technical interview questions based on the job requirements"
@@ -42,4 +44,46 @@ class InterviewPrepResult(BaseModel):
     )
     red_flags_to_address: List[str] = Field(
         description="Weaknesses or gaps the candidate should prepare to explain or reframe confidently"
+    )
+
+
+class AnswerFeedback(BaseModel):
+    score: int = Field(
+        description="Score out of 10 for the candidate's answer"
+    )
+    what_worked: List[str] = Field(
+        description="Specific things the candidate did well in their answer"
+    )
+    what_to_improve: List[str] = Field(
+        description="Specific, actionable ways the candidate can improve their answer"
+    )
+    ideal_answer_hint: str = Field(
+        description="A one sentence hint about what a strong answer would have included"
+    )
+    next_question: str = Field(
+        description="The next interview question to ask the candidate"
+    )
+    topic_covered: str = Field(
+        description="Short label for the topic this question covered e.g. 'API integration', 'testing', 'teamwork'"
+    )
+    is_follow_up: bool = Field(
+        description="True if this is a follow-up on the previous topic, False if it is a new area"
+    )
+
+
+class InterviewSummary(BaseModel):
+    overall_score: float = Field(
+        description="Overall interview score out of 10, averaged across all answers"
+    )
+    strongest_answer: str = Field(
+        description="The question the candidate answered best and why"
+    )
+    weakest_answer: str = Field(
+        description="The question the candidate answered worst and why"
+    )
+    key_improvements: List[str] = Field(
+        description="Top 3 things the candidate should work on before the real interview"
+    )
+    overall_verdict: str = Field(
+        description="One paragraph honest assessment of interview readiness"
     )
