@@ -1,0 +1,53 @@
+:root {
+  --teal: #0EA5A0;
+  --teal-dark: #0c9490;
+  --teal-light: #E1F5EE;
+  --bg: #F8F7F4;
+  --bg-card: #FFFFFF;
+  --bg-secondary: #F1F0ED;
+  --text: #1a1a1a;
+  --text-secondary: #6b6b6b;
+  --text-tertiary: #9b9b9b;
+  --border: rgba(0,0,0,0.08);
+  --border-hover: rgba(0,0,0,0.15);
+  --green-bg: #E1F5EE;
+  --green-text: #0F6E56;
+  --red-bg: #FCEBEB;
+  --red-text: #A32D2D;
+  --amber-bg: #FAEEDA;
+  --amber-text: #854F0B;
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+
+.dark {
+  --bg: #0F1117;
+  --bg-card: #1a1d27;
+  --bg-secondary: #222530;
+  --text: #f0f0f0;
+  --text-secondary: #9b9b9b;
+  --text-tertiary: #666;
+  --border: rgba(255,255,255,0.08);
+  --border-hover: rgba(255,255,255,0.15);
+  --green-bg: #0a2e20;
+  --green-text: #5DCAA5;
+  --red-bg: #2e0a0a;
+  --red-text: #F09595;
+  --amber-bg: #2e1f0a;
+  --amber-text: #FAC775;
+  --teal-light: #0a2e2c;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  transition: background 0.2s, color 0.2s;
+  min-height: 100vh;
+}
+
+textarea, input {
+  font-family: 'DM Sans', sans-serif;
+}
