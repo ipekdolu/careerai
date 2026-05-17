@@ -1,32 +1,43 @@
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
-from pdf_generator import generate_resume_pdf
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 from typing import Optional
 import tempfile
 import os
 import time
 from anthropic import InternalServerError
+ 
 from analyzer import analyze, interview_prep, start_interview, evaluate_answer, summarize_interview, rewrite_resume
 from models import AnalysisResult, InterviewPrepResult, AnswerFeedback, InterviewSummary, ResumeDiff
 from utils import read_file
-
+from pdf_generator import generate_resume_pdf
+ 
+limiter = Limiter(key_func=get_remote_address)
+ 
 app = FastAPI(title="CareerAI API")
-
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+ 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
+ 
+ 
 @app.get("/")
 def root():
     return {"status": "CareerAI API is running"}
-
-
+ 
+ 
 @app.post("/analyze", response_model=AnalysisResult)
+@limiter.limit("10/day")
 async def analyze_resume(
+    request: Request,
     resume: UploadFile = File(...),
     job_description: str = Form(...)
 ):
@@ -38,7 +49,7 @@ async def analyze_resume(
         resume_text = read_file(tmp_path)
     finally:
         os.unlink(tmp_path)
-
+ 
     for attempt in range(3):
         try:
             return analyze(resume_text, job_description)
@@ -47,10 +58,12 @@ async def analyze_resume(
                 time.sleep(2)
                 continue
             raise
-
-
+ 
+ 
 @app.post("/interview-prep", response_model=InterviewPrepResult)
+@limiter.limit("10/day")
 async def generate_interview_prep(
+    request: Request,
     job_description: str = Form(...),
     resume: Optional[UploadFile] = File(None)
 ):
@@ -64,12 +77,14 @@ async def generate_interview_prep(
             resume_text = read_file(tmp_path)
         finally:
             os.unlink(tmp_path)
-
+ 
     return interview_prep(job_description, resume_text)
-
-
+ 
+ 
 @app.post("/interview/start")
+@limiter.limit("10/day")
 async def start_mock_interview(
+    request: Request,
     job_description: str = Form(...),
     focus: str = Form(...),
     resume: Optional[UploadFile] = File(None)
@@ -84,22 +99,24 @@ async def start_mock_interview(
             resume_text = read_file(tmp_path)
         finally:
             os.unlink(tmp_path)
-
+ 
     first_question, history, first_topic = start_interview(
         job_description=job_description,
         resume_text=resume_text,
         focus=focus
     )
-
+ 
     return {
         "first_question": first_question,
         "conversation_history": history,
         "first_topic": first_topic
     }
-
-
+ 
+ 
 @app.post("/interview/answer", response_model=AnswerFeedback)
+@limiter.limit("30/day")
 async def submit_answer(
+    request: Request,
     question: str = Form(...),
     answer: str = Form(...),
     job_description: str = Form(...),
@@ -111,7 +128,7 @@ async def submit_answer(
     import json
     covered = json.loads(covered_topics)
     history = json.loads(conversation_history)
-
+ 
     return evaluate_answer(
         question=question,
         answer=answer,
@@ -121,25 +138,30 @@ async def submit_answer(
         conversation_history=history,
         focus=focus
     )
-
-
+ 
+ 
 @app.post("/interview/summary", response_model=InterviewSummary)
+@limiter.limit("10/day")
 async def get_interview_summary(
+    request: Request,
     questions: str = Form(...),
     answers: str = Form(...),
     feedbacks: str = Form(...)
 ):
     import json
     from models import AnswerFeedback
-
+ 
     q_list = json.loads(questions)
     a_list = json.loads(answers)
     f_list = [AnswerFeedback(**f) for f in json.loads(feedbacks)]
-
+ 
     return summarize_interview(q_list, a_list, f_list)
-
+ 
+ 
 @app.post("/rewrite-resume", response_model=ResumeDiff)
+@limiter.limit("10/day")
 async def rewrite_resume_endpoint(
+    request: Request,
     resume: UploadFile = File(...),
     job_description: str = Form(...)
 ):
@@ -151,7 +173,7 @@ async def rewrite_resume_endpoint(
         resume_text = read_file(tmp_path)
     finally:
         os.unlink(tmp_path)
-
+ 
     for attempt in range(3):
         try:
             return rewrite_resume(resume_text, job_description)
@@ -160,9 +182,11 @@ async def rewrite_resume_endpoint(
                 time.sleep(2)
                 continue
             raise
-
+ 
+ 
 @app.post("/generate-pdf")
-async def generate_pdf(payload: dict):
+@limiter.limit("10/day")
+async def generate_pdf(request: Request, payload: dict):
     try:
         pdf_bytes = generate_resume_pdf(
             name=payload.get("name", ""),
