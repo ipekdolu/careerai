@@ -1,94 +1,136 @@
-# Resume Assistant 📄
-
-An AI-powered tool that analyzes your resume against a job description and generates a personalized interview preparation guide — built with the Claude API.
-
+# CareerAI
+ 
+An AI-powered job application assistant built with the Claude API. From analyzing your resume to practicing for the interview — everything you need to land your next job in one place.
+ 
+**Live demo:** [careerai-delta.vercel.app](https://careerai-delta.vercel.app)
+ 
 ## Features
-
+ 
 - **Resume Analyzer** — fit score, keyword matching, experience gap analysis, and tailored resume bullet suggestions
-- **Interview Prep** — personalized technical, behavioral, and culture questions with talking points and red flags to address
-- **PDF + TXT support** — upload your resume in either format
-- **Web UI** — clean Streamlit interface with a CLI alternative
-
+- **Resume Rewriter** — Claude rewrites your entire resume for a specific job. Review and approve or reject every suggested change before downloading as a PDF
+- **Interview Prep** — personalized technical, behavioral, and culture fit questions with topics to study, talking points, and red flags to address
+- **Mock Interview** — adaptive AI interviewer that asks follow-up questions based on your answers, scores each response, and gives a full debrief at the end
 ## Tech Stack
-
-- [Anthropic Claude API](https://docs.anthropic.com) — LLM backbone
+ 
+**Backend**
+- [Anthropic Claude API](https://docs.anthropic.com) — LLM backbone (claude-sonnet-4-6)
+- [FastAPI](https://fastapi.tiangolo.com) — REST API with 7 endpoints
 - [Pydantic](https://docs.pydantic.dev) — structured output validation
-- [Streamlit](https://streamlit.io) — web interface
-- [Typer](https://typer.tiangolo.com) — CLI interface
 - [pdfplumber](https://github.com/jsvine/pdfplumber) — PDF text extraction
+- [ReportLab](https://www.reportlab.com) — PDF generation
+- [SlowAPI](https://github.com/laurentS/slowapi) — rate limiting
 - Python 3.11+
-
+**Frontend**
+- [React](https://react.dev) + [Vite](https://vitejs.dev)
+- [@tabler/icons-react](https://tabler.io/icons) — icons
+- CSS variables — dark/light mode theming
+**Deployment**
+- Backend → [Render](https://render.com)
+- Frontend → [Vercel](https://vercel.com)
 ## Skills Demonstrated
-
+ 
 - LLM API integration (Anthropic Python SDK)
 - Function calling with a multi-turn tool loop
 - Structured JSON outputs with Pydantic schema validation
-- Prompt engineering — persona, output contracts, scoring guides
-- CLI design with Typer
-- Web UI with Streamlit
-
-## Setup
-
+- Prompt engineering — persona, output contracts, scoring guides, honesty constraints
+- FastAPI — REST endpoints, file uploads, PDF file responses
+- React — component architecture, useState, useRef, useEffect, fetch
+- Full-stack deployment — separate backend and frontend hosting
+## Project Structure
+ 
+```
+careerai/
+├── backend/
+│   ├── api.py            # FastAPI — 7 endpoints
+│   ├── analyzer.py       # Core logic — Claude API calls and tool loop
+│   ├── models.py         # Pydantic output schemas
+│   ├── prompts.py        # System prompts
+│   ├── utils.py          # File reading helper (txt + pdf)
+│   └── pdf_generator.py  # ReportLab PDF generation
+├── frontend/
+│   └── src/
+│       ├── App.jsx
+│       └── components/
+│           ├── Nav.jsx
+│           ├── Hero.jsx
+│           ├── Analyzer.jsx
+│           ├── Prep.jsx
+│           ├── MockInterview.jsx
+│           └── ResumeRewriter.jsx
+├── samples/
+│   ├── sample_resume.txt
+│   ├── sample_resume.pdf
+│   └── sample_jd.txt
+├── CLAUDE.md
+└── render.yaml
+```
+ 
+## Local Setup
+ 
 **1. Clone the repo**
 ```bash
-git clone https://github.com/YOUR_USERNAME/resume-analyzer.git
-cd resume-analyzer
+git clone https://github.com/ipekdolu/careerai.git
+cd careerai
 ```
-
-**2. Create and activate virtual environment**
+ 
+**2. Backend setup**
 ```bash
+cd backend
 python -m venv .venv
-
+ 
 # Windows
 .venv\Scripts\activate
-
+ 
 # Mac/Linux
 source .venv/bin/activate
-```
-
-**3. Install dependencies**
-```bash
+ 
 pip install -r requirements.txt
 ```
-
-**4. Add your API key**
-
-Create a `.env` file in the project root:
+ 
+**3. Add your API key**
+ 
+Create a `.env` file inside `backend/`:
 ```
 ANTHROPIC_API_KEY=sk-ant-your-key-here
 ```
-
-**5. Run the web UI**
+ 
+**4. Run the backend**
 ```bash
-streamlit run app.py
+uvicorn api:app --reload
 ```
-
-**Or run the CLI**
+Runs on http://127.0.0.1:8000 — visit /docs for the interactive API documentation.
+ 
+**5. Frontend setup**
 ```bash
-python main.py --resume your_resume.pdf --job job_description.txt
+cd ../frontend
+npm install
 ```
-
-## Project Structure
-
+ 
+Create `frontend/.env.development`:
 ```
-resume-analyzer/
-├── app.py          # Streamlit web UI
-├── main.py         # CLI entry point
-├── analyzer.py     # Core logic — Claude API calls and tool loop
-├── models.py       # Pydantic output schemas
-├── prompts.py      # System prompts
-├── utils.py        # File reading helper (txt + pdf)
-└── CLAUDE.md       # Claude Code project brief
+VITE_API_URL=http://127.0.0.1:8000
 ```
-
+ 
+**6. Run the frontend**
+```bash
+npm run dev
+```
+Runs on http://localhost:5173
+ 
 ## How It Works
-
+ 
 ### Function Calling
-Both modes use a tool loop — Claude calls tools (`extract_resume_sections`, `score_keyword_match`, `categorize_questions`) and your code executes them locally. Claude then uses the results to generate the final structured response.
-
+The analyzer and interview features use a multi-turn tool loop — Claude calls tools (`extract_resume_sections`, `score_keyword_match`, `categorize_questions`) and the Python code executes them locally. Claude uses the results to generate the final structured response.
+ 
 ### Structured Outputs
-All responses are validated against Pydantic models (`AnalysisResult`, `InterviewPrepResult`) — if Claude returns the wrong shape, it fails loudly rather than passing bad data downstream.
-
+All Claude responses are validated against Pydantic models (`AnalysisResult`, `InterviewPrepResult`, `ResumeDiff`, `AnswerFeedback`, `InterviewSummary`). If Claude returns the wrong shape, it fails loudly rather than passing bad data downstream.
+ 
+### Adaptive Mock Interview
+The mock interview doesn't pre-generate questions. Claude sees the full conversation history on every turn and decides the next question based on what the candidate just said — probing shallow answers with follow-ups and moving on when an answer is solid.
+ 
+### Resume Rewriter Diff
+Claude returns a structured diff (original vs suggested) for every section of the resume. The user approves or rejects each change individually before the final PDF is generated.
+ 
 ## License
-
+ 
 MIT
