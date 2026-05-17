@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import { IconUpload, IconSearch, IconCheck, IconAlertCircle } from '@tabler/icons-react'
 
-const API = 'http://127.0.0.1:8000'
+const API = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
 
 export default function Analyzer() {
   const [resumeFile, setResumeFile] = useState(null)
