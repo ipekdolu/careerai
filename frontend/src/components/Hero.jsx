@@ -1,4 +1,5 @@
-import { IconFileText, IconBulb, IconMicrophone } from '@tabler/icons-react'
+import { IconFileText, IconBulb, IconMicrophone, IconPencil } from '@tabler/icons-react'
+
 
 const features = [
   {
@@ -6,6 +7,12 @@ const features = [
     icon: <IconFileText size={26} />,
     title: 'Resume Analyzer',
     desc: 'Match your resume to any job description and see exactly where you stand.',
+  },
+  {
+    id: 'rewriter',
+    icon: <IconPencil size={26} />,
+    title: 'Resume Rewriter',
+    desc: 'Get your resume rewritten for a specific job. Review and approve every change.',
   },
   {
     id: 'prep',
@@ -20,7 +27,6 @@ const features = [
     desc: 'Practice with an AI interviewer and get scored feedback on every answer.',
   },
 ]
-
 export default function Hero({ section, setSection }) {
   return (
     <div style={{ padding: '56px 32px 40px', textAlign: 'center', maxWidth: 900, margin: '0 auto' }}>
@@ -38,7 +44,7 @@ export default function Hero({ section, setSection }) {
       </p>
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(3,1fr)',
+        gridTemplateColumns: 'repeat(4,1fr)',
         gap: 16,
         marginBottom: 36,
       }}>

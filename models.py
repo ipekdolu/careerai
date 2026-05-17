@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import List
+from typing import Union
 
 
 class AnalysisResult(BaseModel):
@@ -87,3 +88,68 @@ class InterviewSummary(BaseModel):
     overall_verdict: str = Field(
         description="One paragraph honest assessment of interview readiness"
     )
+
+class BulletDiff(BaseModel):
+    original: str = Field(
+        description="The original resume bullet point"
+    )
+    suggested: str = Field(
+        description="The rewritten bullet point tailored to the job description"
+    )
+    reason: str = Field(
+        description="One sentence explaining why this change improves the bullet"
+    )
+
+class ExperienceDiff(BaseModel):
+    company: str = Field(description="Company name")
+    role: str = Field(description="Job title")
+    dates: str = Field(description="Employment dates")
+    bullets: List[BulletDiff] = Field(description="List of bullet point diffs for this role")
+
+
+class ResumeDiff(BaseModel):
+    summary_original: str = Field(
+        description="The original resume summary or objective"
+    )
+    summary_suggested: str = Field(
+        description="Rewritten summary tailored to the job description"
+    )
+    summary_reason: str = Field(
+        description="One sentence explaining the summary changes"
+    )
+    experience: List[ExperienceDiff] = Field(
+        description="List of experience entries with bullet diffs"
+    )
+    skills_original: Union[List[str], str] = Field(
+        description="Original skills list from the resume"
+    )
+    skills_suggested: Union[List[str], str] = Field(
+        description="Reordered and expanded skills list tailored to the JD"
+    )
+    skills_reason: str = Field(
+        description="One sentence explaining the skills changes"
+    )
+
+    name: str = Field(
+        description="Candidate's full name from the resume"
+    )
+    contact: str = Field(
+        description="Candidate's contact info — email, phone, LinkedIn on one line"
+    )
+    education: str = Field(
+        description="Education section — degree, institution, graduation year"
+    )
+
+    def model_post_init(self, __context):
+        if isinstance(self.skills_original, str):
+            self.skills_original = [s.strip() for s in self.skills_original.split(',')]
+        if isinstance(self.skills_suggested, str):
+            self.skills_suggested = [s.strip() for s in self.skills_suggested.split(',')]
+
+class ApprovedResume(BaseModel):
+    name: str
+    contact: str
+    summary: str
+    experience: List[dict]
+    skills: List[str]
+    education: str

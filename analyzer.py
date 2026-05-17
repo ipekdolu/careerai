@@ -3,9 +3,9 @@ import re
 import json
 from dotenv import load_dotenv
 import anthropic
-from models import AnalysisResult, InterviewPrepResult, AnswerFeedback, InterviewSummary
-from prompts import SYSTEM_PROMPT, INTERVIEW_PREP_PROMPT, EVALUATOR_PROMPT
- 
+from models import AnalysisResult, InterviewPrepResult, AnswerFeedback, InterviewSummary, ResumeDiff
+from prompts import SYSTEM_PROMPT, INTERVIEW_PREP_PROMPT, EVALUATOR_PROMPT, REWRITER_PROMPT
+
 load_dotenv()
  
 client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
@@ -387,3 +387,49 @@ Generate a final interview summary assessment as JSON.
 
     parsed = json.loads(match.group(0))
     return InterviewSummary(**parsed)
+
+def rewrite_resume(resume_text: str, job_description: str) -> ResumeDiff:
+    """Rewrites a resume tailored to a specific job description, returning a structured diff."""
+
+    user_message = f"""
+    ## Current Resume:
+    {resume_text}
+
+    ## Target Job Description:
+    {job_description}
+
+    Rewrite this resume to be perfectly tailored for this job description.
+    Return a structured diff showing original vs suggested for every section.
+    Remember — stay honest, never fabricate experience or skills.
+    Return as JSON only.
+    """
+
+    messages = [{"role": "user", "content": user_message}]
+
+    for attempt in range(3):
+        try:
+            response = client.messages.create(
+                model="claude-sonnet-4-6",
+                max_tokens=4000,
+                system=REWRITER_PROMPT,
+                messages=messages
+            )
+
+            raw_text = next((b.text for b in response.content if hasattr(b, "text")), "")
+
+            if not raw_text:
+                raise ValueError("Claude returned no text")
+
+            match = re.search(r"\{[\s\S]*\}", raw_text)
+            if not match:
+                raise ValueError(f"No JSON found in response: {raw_text[:200]}")
+
+            parsed = json.loads(match.group(0))
+            return ResumeDiff(**parsed)
+
+        except Exception as e:
+            if attempt < 2:
+                import time
+                time.sleep(2)
+                continue
+            raise

@@ -1,13 +1,14 @@
-from fastapi import FastAPI, UploadFile, File, Form
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
+from pdf_generator import generate_resume_pdf
 from typing import Optional
 import tempfile
 import os
 import time
 from anthropic import InternalServerError
-
-from analyzer import analyze, interview_prep, start_interview, evaluate_answer, summarize_interview
-from models import AnalysisResult, InterviewPrepResult, AnswerFeedback, InterviewSummary
+from analyzer import analyze, interview_prep, start_interview, evaluate_answer, summarize_interview, rewrite_resume
+from models import AnalysisResult, InterviewPrepResult, AnswerFeedback, InterviewSummary, ResumeDiff
 from utils import read_file
 
 app = FastAPI(title="CareerAI API")
@@ -136,3 +137,45 @@ async def get_interview_summary(
     f_list = [AnswerFeedback(**f) for f in json.loads(feedbacks)]
 
     return summarize_interview(q_list, a_list, f_list)
+
+@app.post("/rewrite-resume", response_model=ResumeDiff)
+async def rewrite_resume_endpoint(
+    resume: UploadFile = File(...),
+    job_description: str = Form(...)
+):
+    suffix = os.path.splitext(resume.filename)[1]
+    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+        tmp.write(await resume.read())
+        tmp_path = tmp.name
+    try:
+        resume_text = read_file(tmp_path)
+    finally:
+        os.unlink(tmp_path)
+
+    for attempt in range(3):
+        try:
+            return rewrite_resume(resume_text, job_description)
+        except Exception as e:
+            if attempt < 2:
+                time.sleep(2)
+                continue
+            raise
+
+@app.post("/generate-pdf")
+async def generate_pdf(payload: dict):
+    try:
+        pdf_bytes = generate_resume_pdf(
+            name=payload.get("name", ""),
+            contact=payload.get("contact", ""),
+            summary=payload.get("summary", ""),
+            experience=payload.get("experience", []),
+            skills=payload.get("skills", []),
+            education=payload.get("education", "")
+        )
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={"Content-Disposition": "attachment; filename=rewritten_resume.pdf"}
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
