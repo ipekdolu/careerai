@@ -1,5 +1,25 @@
 import { useState, useRef } from 'react'
-import { IconUpload, IconCheck, IconPencil, IconDownload } from '@tabler/icons-react'
+import { IconUpload, IconCheck, IconPencil, IconDownload, IconAlertCircle } from '@tabler/icons-react'
+
+function ErrorBanner({ message, onDismiss, onRetry }) {
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'flex-start', gap: 10, marginTop: 12,
+      padding: '12px 16px', background: 'var(--red-bg)', color: 'var(--red-text)',
+      borderRadius: 'var(--radius-sm)', fontSize: 13, lineHeight: 1.5,
+      animation: 'slide-in-down 0.2s cubic-bezier(0.16,1,0.3,1) both',
+    }}>
+      <IconAlertCircle size={15} style={{ flexShrink: 0, marginTop: 1 }} />
+      <span style={{ flex: 1 }}>{message}</span>
+      {onRetry && (
+        <button onClick={onRetry} style={{ background: 'none', border: '1px solid var(--red-text)', borderRadius: 4, cursor: 'pointer', color: 'var(--red-text)', padding: '2px 10px', fontSize: 12, fontWeight: 500, lineHeight: 1.6, whiteSpace: 'nowrap' }}>Retry</button>
+      )}
+      {onDismiss && (
+        <button onClick={onDismiss} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--red-text)', padding: 0, fontSize: 16, lineHeight: 1 }}>×</button>
+      )}
+    </div>
+  )
+}
 
 const API = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
 
@@ -10,6 +30,7 @@ export default function ResumeRewriter({ initialResume, initialJd, onBack }) {
   const [diff, setDiff] = useState(null)
   const [approved, setApproved] = useState({})
   const [generating, setGenerating] = useState(false)
+  const [error, setError] = useState(null)
   const fileRef = useRef()
 
   const handleFile = (e) => {
@@ -18,8 +39,9 @@ export default function ResumeRewriter({ initialResume, initialJd, onBack }) {
   }
 
   const run = async () => {
-    if (!resumeFile) return alert('Please upload your resume.')
-    if (!jd.trim()) return alert('Please paste a job description.')
+    if (!resumeFile) return setError('Please upload your resume before rewriting.')
+    if (!jd.trim()) return setError('Please paste a job description.')
+    setError(null)
     setLoading(true)
     setDiff(null)
     setApproved({})
@@ -45,7 +67,7 @@ export default function ResumeRewriter({ initialResume, initialJd, onBack }) {
       })
       setApproved(defaults)
     } catch(e) {
-      alert('Error: ' + e.message)
+      setError('Rewrite failed. Check your connection and try again.')
     } finally {
       setLoading(false)
     }
@@ -93,7 +115,7 @@ export default function ResumeRewriter({ initialResume, initialJd, onBack }) {
       a.click()
       URL.revokeObjectURL(url)
     } catch(e) {
-      alert('Error generating PDF: ' + e.message)
+      setError('PDF generation failed. Check your connection and try again.')
     } finally {
       setGenerating(false)
     }
@@ -125,11 +147,18 @@ export default function ResumeRewriter({ initialResume, initialJd, onBack }) {
           <div style={{ marginBottom: 18 }}>
             <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)', marginBottom: 8 }}>Resume</label>
             <div
+              role="button"
+              tabIndex={0}
+              aria-label={resumeFile ? `Resume uploaded: ${resumeFile.name}. Click to change.` : 'Upload resume — click or drag and drop a PDF or TXT file'}
               onClick={() => fileRef.current.click()}
+              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileRef.current.click() } }}
+              onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) setResumeFile(f) }}
+              onDragOver={e => e.preventDefault()}
               style={{
                 border: `2px dashed ${resumeFile ? 'var(--teal)' : 'var(--border-hover)'}`,
                 borderRadius: 'var(--radius)', padding: 28, textAlign: 'center',
                 cursor: 'pointer', background: resumeFile ? 'var(--teal-light)' : 'var(--bg-secondary)',
+                transition: 'all 0.15s',
               }}
             >
               {resumeFile
@@ -156,7 +185,10 @@ export default function ResumeRewriter({ initialResume, initialJd, onBack }) {
                 width: '100%', padding: 14, border: '1px solid var(--border)',
                 borderRadius: 'var(--radius-sm)', background: 'var(--bg-card)',
                 color: 'var(--text)', fontSize: 14, resize: 'vertical', minHeight: 150,
+                outline: 'none', transition: 'border-color 0.15s, box-shadow 0.15s',
               }}
+              onFocus={e => { e.target.style.borderColor = 'var(--teal)'; e.target.style.boxShadow = '0 0 0 3px rgba(14,165,160,0.1)' }}
+              onBlur={e => { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none' }}
             />
           </div>
 
@@ -171,6 +203,8 @@ export default function ResumeRewriter({ initialResume, initialJd, onBack }) {
               {loading ? 'Rewriting...' : <><IconPencil size={16} /> Rewrite Resume</>}
             </button>
           </div>
+
+          {error && <ErrorBanner message={error} onRetry={!loading ? run : undefined} onDismiss={() => setError(null)} />}
         </>
       )}
 
@@ -258,6 +292,8 @@ export default function ResumeRewriter({ initialResume, initialJd, onBack }) {
               </div>
             </div>
           </DiffSection>
+
+          {error && <ErrorBanner message={error} onRetry={!generating ? generatePdf : undefined} onDismiss={() => setError(null)} />}
 
           {/* Download */}
           <div style={{ display: 'flex', justifyContent: 'center', gap: 12, marginTop: 32 }}>

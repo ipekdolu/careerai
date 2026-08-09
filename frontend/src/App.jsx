@@ -10,6 +10,15 @@ export default function App() {
   const [section, setSection] = useState('analyzer')
   const [dark, setDark] = useState(false)
 
+  // Shared context: last-used resume file and job description persist across feature switches
+  const [sharedResume, setSharedResume] = useState(null)
+  const [sharedJd, setSharedJd] = useState('')
+
+  const updateContext = (resume, jd) => {
+    if (resume) setSharedResume(resume)
+    if (jd) setSharedJd(jd)
+  }
+
   const toggleDark = () => {
     setDark(!dark)
     document.body.classList.toggle('dark')
@@ -20,10 +29,34 @@ export default function App() {
       <Nav dark={dark} toggleDark={toggleDark} />
       <Hero section={section} setSection={setSection} />
       <main style={{ maxWidth: 860, margin: '0 auto', padding: '0 32px 64px' }}>
-        {section === 'analyzer' && <Analyzer onRewrite={() => setSection('rewriter')} />}
-        {section === 'prep' && <Prep />}
-        {section === 'mock' && <MockInterview />}
-        {section === 'rewriter' && <ResumeRewriter onBack={() => setSection('analyzer')} />}
+        {section === 'analyzer' && (
+          <Analyzer
+            initialResume={sharedResume}
+            initialJd={sharedJd}
+            onContextUpdate={updateContext}
+            onRewrite={() => setSection('rewriter')}
+          />
+        )}
+        {section === 'prep' && (
+          <Prep
+            initialResume={sharedResume}
+            initialJd={sharedJd}
+            onContextUpdate={updateContext}
+          />
+        )}
+        {section === 'mock' && (
+          <MockInterview
+            initialJd={sharedJd}
+            onContextUpdate={updateContext}
+          />
+        )}
+        {section === 'rewriter' && (
+          <ResumeRewriter
+            initialResume={sharedResume}
+            initialJd={sharedJd}
+            onBack={() => setSection('analyzer')}
+          />
+        )}
       </main>
     </div>
   )

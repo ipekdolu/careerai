@@ -1,6 +1,5 @@
 import { IconFileText, IconBulb, IconMicrophone, IconPencil } from '@tabler/icons-react'
 
-
 const features = [
   {
     id: 'analyzer',
@@ -27,6 +26,7 @@ const features = [
     desc: 'Practice with an AI interviewer and get scored feedback on every answer.',
   },
 ]
+
 export default function Hero({ section, setSection }) {
   return (
     <div style={{ padding: '56px 32px 40px', textAlign: 'center', maxWidth: 900, margin: '0 auto' }}>
@@ -49,9 +49,11 @@ export default function Hero({ section, setSection }) {
         marginBottom: 36,
       }}>
         {features.map(f => (
-          <div
+          <button
             key={f.id}
             onClick={() => setSection(f.id)}
+            aria-pressed={section === f.id}
+            aria-label={`${f.title}: ${f.desc}`}
             style={{
               background: 'var(--bg-card)',
               border: `${section === f.id ? '2px' : '1px'} solid ${section === f.id ? 'var(--teal)' : 'var(--border)'}`,
@@ -61,12 +63,20 @@ export default function Hero({ section, setSection }) {
               cursor: 'pointer',
               boxShadow: section === f.id ? '0 0 0 3px rgba(14,165,160,0.1)' : 'none',
               transition: 'all 0.15s',
+              fontFamily: 'DM Sans, sans-serif',
+              width: '100%',
+            }}
+            onMouseEnter={e => {
+              if (section !== f.id) e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)'
+            }}
+            onMouseLeave={e => {
+              if (section !== f.id) e.currentTarget.style.boxShadow = 'none'
             }}
           >
             <div style={{ color: 'var(--teal)', marginBottom: 14 }}>{f.icon}</div>
-            <h3 style={{ fontSize: 15, fontWeight: 500, marginBottom: 8 }}>{f.title}</h3>
-            <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>{f.desc}</p>
-          </div>
+            <h3 style={{ fontSize: 15, fontWeight: 500, marginBottom: 8, color: 'var(--text)' }}>{f.title}</h3>
+            <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6, margin: 0 }}>{f.desc}</p>
+          </button>
         ))}
       </div>
     </div>

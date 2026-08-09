@@ -1,22 +1,60 @@
 import { useState, useRef, useEffect } from 'react'
-import { IconUpload, IconCheck, IconSend, IconPlayerPlay, IconX } from '@tabler/icons-react'
+import { IconUpload, IconCheck, IconSend, IconPlayerPlay, IconX, IconAlertCircle } from '@tabler/icons-react'
 
 const API = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
+const SESSION_KEY = 'careerai_mock_session'
 
 const FOCUS_OPTIONS = ['Mixed', 'Technical', 'Behavioral', 'Culture & fit']
 
-export default function MockInterview() {
+function ErrorBanner({ message, onDismiss, onRetry }) {
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'flex-start', gap: 10, marginTop: 12,
+      padding: '12px 16px', background: 'var(--red-bg)', color: 'var(--red-text)',
+      borderRadius: 'var(--radius-sm)', fontSize: 13, lineHeight: 1.5,
+      animation: 'slide-in-down 0.2s cubic-bezier(0.16,1,0.3,1) both',
+    }}>
+      <IconAlertCircle size={15} style={{ flexShrink: 0, marginTop: 1 }} />
+      <span style={{ flex: 1 }}>{message}</span>
+      {onRetry && (
+        <button onClick={onRetry} style={{ background: 'none', border: '1px solid var(--red-text)', borderRadius: 4, cursor: 'pointer', color: 'var(--red-text)', padding: '2px 10px', fontSize: 12, fontWeight: 500, lineHeight: 1.6, whiteSpace: 'nowrap' }}>Retry</button>
+      )}
+      {onDismiss && (
+        <button onClick={onDismiss} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--red-text)', padding: 0, fontSize: 16, lineHeight: 1 }}>×</button>
+      )}
+    </div>
+  )
+}
+
+function TypingDots() {
+  return (
+    <span style={{ display: 'inline-flex', gap: 4, alignItems: 'center', height: 20 }}>
+      {[0, 1, 2].map(i => (
+        <span key={i} style={{
+          width: 6, height: 6, borderRadius: '50%',
+          background: 'var(--text-tertiary)',
+          display: 'inline-block',
+          animation: `dot-pulse 1.2s ease-in-out ${i * 0.2}s infinite`,
+        }} />
+      ))}
+    </span>
+  )
+}
+
+export default function MockInterview({ initialJd, onContextUpdate }) {
   const [resumeFile, setResumeFile] = useState(null)
-  const [jd, setJd] = useState('')
+  const [jd, setJd] = useState(initialJd || '')
   const [focus, setFocus] = useState('Mixed')
   const [totalQ, setTotalQ] = useState(5)
-  const [phase, setPhase] = useState('setup') // setup | interview | summary
+  const [phase, setPhase] = useState('setup')
   const [loading, setLoading] = useState(false)
   const [sending, setSending] = useState(false)
   const [messages, setMessages] = useState([])
   const [inputVal, setInputVal] = useState('')
   const [pendingFeedback, setPendingFeedback] = useState(null)
   const [summary, setSummary] = useState(null)
+  const [error, setError] = useState(null)
+  const [savedSession, setSavedSession] = useState(null)
 
   const [interviewState, setInterviewState] = useState({
     currentQuestion: '',
@@ -32,9 +70,44 @@ export default function MockInterview() {
   const chatRef = useRef()
   const inputRef = useRef()
 
+  // Check for saved session on mount
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(SESSION_KEY)
+      if (raw) {
+        const saved = JSON.parse(raw)
+        if (saved.phase && saved.phase !== 'setup') {
+          setSavedSession(saved)
+        }
+      }
+    } catch(e) {}
+  }, [])
+
+  // Persist session on state changes (only during active interview)
+  useEffect(() => {
+    if (phase === 'setup') return
+    try {
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+        phase, messages, interviewState, summary, jd, focus, totalQ
+      }))
+    } catch(e) {}
+  }, [phase, messages, interviewState, summary, jd, focus, totalQ])
+
   useEffect(() => {
     if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight
   }, [messages, pendingFeedback])
+
+  const restoreSession = () => {
+    if (!savedSession) return
+    setPhase(savedSession.phase)
+    setMessages(savedSession.messages || [])
+    setInterviewState(savedSession.interviewState || interviewState)
+    setSummary(savedSession.summary || null)
+    setJd(savedSession.jd || '')
+    setFocus(savedSession.focus || 'Mixed')
+    setTotalQ(savedSession.totalQ || 5)
+    setSavedSession(null)
+  }
 
   const handleFile = (e) => {
     const file = e.target.files[0]
@@ -42,8 +115,11 @@ export default function MockInterview() {
   }
 
   const startInterview = async () => {
-    if (!jd.trim()) return alert('Please paste a job description.')
+    if (!jd.trim()) return setError('Please paste a job description.')
+    if (jd.trim().length < 80) return setError(`Job description is too short (${jd.trim().length} chars). Paste the full description for relevant questions.`)
+    setError(null)
     setLoading(true)
+    onContextUpdate?.(resumeFile, jd)
     const form = new FormData()
     form.append('job_description', jd)
     form.append('focus', focus)
@@ -67,7 +143,7 @@ export default function MockInterview() {
       setMessages([{ role: 'ai', text: data.first_question }])
       setPhase('interview')
     } catch(e) {
-      alert('Error: ' + e.message)
+      setError('Could not start interview. Check your connection and try again.')
     } finally {
       setLoading(false)
     }
@@ -122,7 +198,7 @@ export default function MockInterview() {
       })
     } catch(e) {
       setMessages(prev => prev.filter(m => !m.loading))
-      setMessages(prev => [...prev, { role: 'ai', text: 'Something went wrong. Please try again.' }])
+      setMessages(prev => [...prev, { role: 'ai', text: 'Connection error. Your progress is saved — refresh the page to continue.' }])
     } finally {
       setSending(false)
     }
@@ -145,7 +221,7 @@ export default function MockInterview() {
         setSummary(await res.json())
         setPhase('summary')
       } catch(e) {
-        alert('Error loading summary: ' + e.message)
+        setError('Could not load summary. Your interview data is saved — refresh to retry.')
       } finally {
         setLoading(false)
       }
@@ -163,23 +239,31 @@ export default function MockInterview() {
   }
 
   const restart = () => {
+    sessionStorage.removeItem(SESSION_KEY)
+    setSavedSession(null)
     setPhase('setup')
     setMessages([])
     setPendingFeedback(null)
     setSummary(null)
+    setError(null)
     setInterviewState({
       currentQuestion: '', questions: [], answers: [],
       feedbacks: [], coveredTopics: [], conversationHistory: [], questionNum: 1,
     })
   }
 
-  const progress = phase === 'interview'
-    ? Math.round(((interviewState.questionNum - 1) / totalQ) * 100)
+  // Running average from completed feedbacks
+  const avgScore = interviewState.feedbacks.length > 0
+    ? (interviewState.feedbacks.reduce((sum, f) => sum + f.score, 0) / interviewState.feedbacks.length).toFixed(1)
+    : null
+
+  // Progress bar uses transform: scaleX to avoid layout thrash
+  const progressFraction = phase === 'interview'
+    ? (interviewState.questionNum - 1) / totalQ
     : 0
 
-  const scoreColor = (s) => s >= 7 ? 'var(--teal)' : s >= 5 ? '#EF9F27' : '#E24B4A'
+  const scoreColor = (s) => s >= 7 ? 'var(--green-text)' : s >= 5 ? 'var(--amber-text)' : 'var(--red-text)'
   const scoreBg = (s) => s >= 7 ? 'var(--green-bg)' : s >= 5 ? 'var(--amber-bg)' : 'var(--red-bg)'
-  const scoreText = (s) => s >= 7 ? 'var(--green-text)' : s >= 5 ? 'var(--amber-text)' : 'var(--red-text)'
 
   return (
     <div>
@@ -188,20 +272,54 @@ export default function MockInterview() {
         Claude conducts a personalized interview and gives scored feedback on every answer.
       </p>
 
+      {/* Resume saved session banner */}
+      {savedSession && phase === 'setup' && (
+        <div style={{
+          background: 'var(--teal-light)', border: '1px solid var(--teal)',
+          borderRadius: 'var(--radius)', padding: '16px 20px', marginBottom: 20,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+        }}>
+          <p style={{ fontSize: 14, color: 'var(--teal)', margin: 0 }}>
+            You have an interview in progress. Continue where you left off?
+          </p>
+          <div style={{ display: 'flex', gap: 10, flexShrink: 0 }}>
+            <button onClick={restoreSession} style={{
+              background: 'var(--teal)', color: '#fff', border: 'none',
+              borderRadius: 'var(--radius-sm)', padding: '8px 16px', fontSize: 13, fontWeight: 500, cursor: 'pointer',
+            }}>
+              Resume
+            </button>
+            <button onClick={() => { sessionStorage.removeItem(SESSION_KEY); setSavedSession(null) }} style={{
+              background: 'none', color: 'var(--teal)', border: '1px solid var(--teal)',
+              borderRadius: 'var(--radius-sm)', padding: '8px 16px', fontSize: 13, fontWeight: 500, cursor: 'pointer',
+            }}>
+              Start fresh
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* SETUP */}
       {phase === 'setup' && (
         <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: 32 }}>
           <div style={{ marginBottom: 18 }}>
             <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)', marginBottom: 8 }}>
-              Resume <span style={{ color: 'var(--text-tertiary)', fontWeight: 400 }}>(optional)</span>
+              Resume <span style={{ color: 'var(--text-tertiary)', fontWeight: 400 }}>(optional — personalizes the questions)</span>
             </label>
             <div
+              role="button"
+              tabIndex={0}
+              aria-label={resumeFile ? `Resume uploaded: ${resumeFile.name}. Click to change.` : 'Upload resume — click or drag and drop a PDF or TXT file'}
               onClick={() => fileRef.current.click()}
+              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileRef.current.click() } }}
+              onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) setResumeFile(f) }}
+              onDragOver={e => e.preventDefault()}
               style={{
                 border: `2px dashed ${resumeFile ? 'var(--teal)' : 'var(--border-hover)'}`,
                 borderRadius: 'var(--radius)',
                 padding: 24, textAlign: 'center', cursor: 'pointer',
                 background: resumeFile ? 'var(--teal-light)' : 'var(--bg-secondary)',
+                transition: 'all 0.15s',
               }}
             >
               {resumeFile
@@ -222,9 +340,15 @@ export default function MockInterview() {
             <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)', marginBottom: 8 }}>Job description</label>
             <textarea
               value={jd}
-              onChange={e => setJd(e.target.value)}
+              onChange={e => { setJd(e.target.value); onContextUpdate?.(null, e.target.value) }}
               placeholder="Paste the job description here..."
-              style={{ width: '100%', padding: 14, border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', background: 'var(--bg-card)', color: 'var(--text)', fontSize: 14, resize: 'vertical', minHeight: 130 }}
+              style={{
+                width: '100%', padding: 14, border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)',
+                background: 'var(--bg-card)', color: 'var(--text)', fontSize: 14, resize: 'vertical', minHeight: 130,
+                outline: 'none', transition: 'border-color 0.15s, box-shadow 0.15s',
+              }}
+              onFocus={e => { e.target.style.borderColor = 'var(--teal)'; e.target.style.boxShadow = '0 0 0 3px rgba(14,165,160,0.1)' }}
+              onBlur={e => { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none' }}
             />
           </div>
 
@@ -237,6 +361,7 @@ export default function MockInterview() {
                   borderRadius: 99, background: focus === f ? 'var(--teal-light)' : 'var(--bg-secondary)',
                   color: focus === f ? 'var(--teal)' : 'var(--text-secondary)',
                   fontSize: 13, cursor: 'pointer', fontFamily: 'DM Sans, sans-serif',
+                  transition: 'all 0.15s',
                 }}>
                   {f}
                 </button>
@@ -266,18 +391,34 @@ export default function MockInterview() {
               {loading ? 'Starting...' : <><IconPlayerPlay size={16} /> Start interview</>}
             </button>
           </div>
+
+          {error && <ErrorBanner message={error} onRetry={!loading ? startInterview : undefined} onDismiss={() => setError(null)} />}
         </div>
       )}
 
       {/* INTERVIEW */}
       {phase === 'interview' && (
         <div>
+          {/* Progress bar — uses scaleX to avoid layout thrash */}
           <div style={{ height: 4, background: 'var(--bg-secondary)', borderRadius: 99, marginBottom: 8, overflow: 'hidden' }}>
-            <div style={{ height: '100%', width: `${progress}%`, background: 'var(--teal)', borderRadius: 99, transition: 'width 0.4s ease' }} />
+            <div style={{
+              height: '100%', width: '100%',
+              background: 'var(--teal)', borderRadius: 99,
+              transform: `scaleX(${progressFraction})`,
+              transformOrigin: 'left',
+              transition: 'transform 0.4s ease',
+            }} />
           </div>
-          <p style={{ fontSize: 13, color: 'var(--text-tertiary)', marginBottom: 20 }}>
-            Question {interviewState.questionNum} of {totalQ}
-          </p>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+            <p style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>
+              Question {interviewState.questionNum} of {totalQ}
+            </p>
+            {avgScore && (
+              <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+                Running avg: <strong style={{ color: 'var(--teal)' }}>{avgScore}/10</strong>
+              </p>
+            )}
+          </div>
 
           <div ref={chatRef} style={{
             background: 'var(--bg-card)', border: '1px solid var(--border)',
@@ -286,7 +427,7 @@ export default function MockInterview() {
             flexDirection: 'column', gap: 16, marginBottom: 14,
           }}>
             {messages.map((m, i) => (
-              <div key={i} style={{ maxWidth: '78%', alignSelf: m.role === 'user' ? 'flex-end' : 'flex-start' }}>
+              <div key={i} style={{ maxWidth: '78%', alignSelf: m.role === 'user' ? 'flex-end' : 'flex-start', animation: 'msg-up 0.2s cubic-bezier(0.16,1,0.3,1) both' }}>
                 <div style={{
                   padding: '12px 16px', borderRadius: 'var(--radius)', fontSize: 14, lineHeight: 1.65,
                   background: m.role === 'user' ? 'var(--teal)' : 'var(--bg-secondary)',
@@ -294,7 +435,7 @@ export default function MockInterview() {
                   borderBottomRightRadius: m.role === 'user' ? 4 : 'var(--radius)',
                   borderBottomLeftRadius: m.role === 'ai' ? 4 : 'var(--radius)',
                 }}>
-                  {m.loading ? '...' : m.text}
+                  {m.loading ? <TypingDots /> : m.text}
                 </div>
               </div>
             ))}
@@ -304,17 +445,18 @@ export default function MockInterview() {
                 <div style={{ padding: '16px', borderRadius: 'var(--radius)', background: 'var(--bg-secondary)', borderBottomLeftRadius: 4 }}>
                   <span style={{
                     display: 'inline-block', fontSize: 13, fontWeight: 500,
-                    padding: '3px 12px', borderRadius: 99, marginBottom: 10,
+                    padding: '3px 12px', borderRadius: 99, marginBottom: 12,
                     background: scoreBg(pendingFeedback.feedback.score),
-                    color: scoreText(pendingFeedback.feedback.score),
+                    color: scoreColor(pendingFeedback.feedback.score),
                   }}>
                     {pendingFeedback.feedback.score}/10
                   </span>
-                  <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)', marginBottom: 4 }}>What worked</div>
+                  {/* What worked shown first — positive before constructive */}
+                  <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--green-text)', marginBottom: 4 }}>What landed well</div>
                   {pendingFeedback.feedback.what_worked.map((w, i) => (
-                    <div key={i} style={{ fontSize: 13, marginBottom: 3 }}>• {w}</div>
+                    <div key={i} style={{ fontSize: 13, marginBottom: 3, color: 'var(--text)' }}>• {w}</div>
                   ))}
-                  <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)', margin: '8px 0 4px' }}>What to improve</div>
+                  <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)', margin: '10px 0 4px' }}>To strengthen</div>
                   {pendingFeedback.feedback.what_to_improve.map((w, i) => (
                     <div key={i} style={{ fontSize: 13, marginBottom: 3 }}>• {w}</div>
                   ))}
@@ -333,18 +475,21 @@ export default function MockInterview() {
                 value={inputVal}
                 onChange={e => setInputVal(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter' && !sending) submitAnswer() }}
-                placeholder="Type your answer here..."
+                placeholder="Type your answer and press Enter..."
                 disabled={sending}
                 style={{
                   flex: 1, padding: '13px 16px', border: '1px solid var(--border)',
                   borderRadius: 'var(--radius-sm)', background: 'var(--bg-card)',
-                  color: 'var(--text)', fontSize: 14,
+                  color: 'var(--text)', fontSize: 14, outline: 'none',
+                  transition: 'border-color 0.15s, box-shadow 0.15s',
                 }}
+                onFocus={e => { e.target.style.borderColor = 'var(--teal)'; e.target.style.boxShadow = '0 0 0 3px rgba(14,165,160,0.1)' }}
+                onBlur={e => { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none' }}
               />
               <button onClick={submitAnswer} disabled={sending} style={{
                 background: sending ? '#9ca3af' : 'var(--teal)',
                 border: 'none', color: '#fff', borderRadius: 'var(--radius-sm)',
-                padding: '0 20px', cursor: sending ? 'not-allowed' : 'pointer', fontSize: 18,
+                padding: '0 20px', cursor: sending ? 'not-allowed' : 'pointer',
               }}>
                 <IconSend size={18} />
               </button>
@@ -364,6 +509,8 @@ export default function MockInterview() {
               </button>
             </div>
           )}
+
+          {error && <ErrorBanner message={error} onDismiss={() => setError(null)} />}
         </div>
       )}
 
@@ -383,7 +530,7 @@ export default function MockInterview() {
             <button onClick={() => setPhase('interview')} style={{
               position: 'absolute', top: 16, right: 16,
               background: 'none', border: 'none', cursor: 'pointer',
-              color: 'var(--text-tertiary)', fontSize: 22,
+              color: 'var(--text-tertiary)',
             }}>
               <IconX size={22} />
             </button>
@@ -417,7 +564,7 @@ export default function MockInterview() {
                 <p style={{ fontSize: 13, lineHeight: 1.6, color: 'var(--green-text)' }}>{summary.strongest_answer}</p>
               </div>
               <div style={{ padding: 16, borderRadius: 'var(--radius-sm)', background: 'var(--red-bg)', border: '1px solid rgba(226,75,74,0.2)' }}>
-                <div style={{ fontSize: 11, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--red-text)', marginBottom: 8 }}>Weakest answer</div>
+                <div style={{ fontSize: 11, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--red-text)', marginBottom: 8 }}>Next focus area</div>
                 <p style={{ fontSize: 13, lineHeight: 1.6, color: 'var(--red-text)' }}>{summary.weakest_answer}</p>
               </div>
             </div>

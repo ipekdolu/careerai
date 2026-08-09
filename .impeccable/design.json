@@ -1,0 +1,240 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-09T00:00:00Z",
+  "title": "Design System: CareerAI",
+  "extensions": {
+    "colorMeta": {
+      "catalyst": {
+        "role": "primary",
+        "displayName": "Catalyst",
+        "canonical": "#0EA5A0",
+        "tonalRamp": ["#022c2b", "#044241", "#075a58", "#0a7774", "#0EA5A0", "#3dbbb7", "#7cd3d0", "#c8edec"]
+      },
+      "catalyst-deep": {
+        "role": "primary",
+        "displayName": "Catalyst Deep",
+        "canonical": "#0c9490",
+        "tonalRamp": ["#021f1e", "#043936", "#064f4c", "#096a67", "#0c9490", "#3aaeaa", "#79c9c6", "#c3e8e7"]
+      },
+      "catalyst-mist": {
+        "role": "primary",
+        "displayName": "Catalyst Mist",
+        "canonical": "#E1F5EE",
+        "tonalRamp": ["#0a2e22", "#0f4433", "#166048", "#1e8060", "#27a87e", "#5dc8a2", "#95dcc4", "#E1F5EE"]
+      },
+      "launch-white": {
+        "role": "neutral",
+        "displayName": "Launch White",
+        "canonical": "#F8F7F4",
+        "tonalRamp": ["#1a1917", "#2a2926", "#3d3c38", "#565450", "#706e69", "#9b9996", "#c8c6c2", "#F8F7F4"]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Surface",
+        "canonical": "#FFFFFF",
+        "tonalRamp": ["#1a1a1a", "#2d2d2d", "#404040", "#606060", "#808080", "#a0a0a0", "#c8c8c8", "#FFFFFF"]
+      },
+      "surface-secondary": {
+        "role": "neutral",
+        "displayName": "Surface Secondary",
+        "canonical": "#F1F0ED",
+        "tonalRamp": ["#181715", "#272624", "#363532", "#504f4c", "#6b6a67", "#96958f", "#c4c3be", "#F1F0ED"]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#1a1a1a",
+        "tonalRamp": ["#0a0a0a", "#111111", "#1a1a1a", "#2d2d2d", "#404040", "#6b6b6b", "#9b9b9b", "#d4d4d4"]
+      },
+      "success-surface": {
+        "role": "semantic",
+        "displayName": "Success Surface",
+        "canonical": "#E1F5EE",
+        "tonalRamp": ["#0a2e22", "#0f4433", "#166048", "#1e8060", "#27a87e", "#5dc8a2", "#95dcc4", "#E1F5EE"]
+      },
+      "risk-surface": {
+        "role": "semantic",
+        "displayName": "Risk Surface",
+        "canonical": "#FCEBEB",
+        "tonalRamp": ["#2e0a0a", "#4a1111", "#6b1919", "#8c2424", "#b33030", "#d06060", "#e89898", "#FCEBEB"]
+      },
+      "caution-surface": {
+        "role": "semantic",
+        "displayName": "Caution Surface",
+        "canonical": "#FAEEDA",
+        "tonalRamp": ["#2e1f0a", "#473012", "#63441d", "#845c2a", "#a87838", "#c8a060", "#e0c898", "#FAEEDA"]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Hero heading only. One instance per page at 44px."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Section titles, brand mark in nav (22px), and fit score readout label."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Feature card labels, button text, subheadings within panels."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "All instructional copy, descriptions, prose output. Max ~72ch line length."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Input labels, column headers, tag text, metadata. Always Ink Secondary."
+      }
+    },
+    "shadows": [
+      {
+        "name": "lift",
+        "value": "0 2px 8px rgba(0,0,0,0.08)",
+        "purpose": "Default card and panel shadow. Lifts the surface above Launch White. Used at rest."
+      },
+      {
+        "name": "lift-strong",
+        "value": "0 4px 16px rgba(0,0,0,0.12)",
+        "purpose": "Card hover state where hover elevation is meaningful, e.g. the feature tab grid."
+      },
+      {
+        "name": "catalyst-glow",
+        "value": "0 0 0 3px rgba(14,165,160,0.1)",
+        "purpose": "Applied alongside a 2px Catalyst border on selected or focused states. The only color-tinted shadow in the system."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-standard",
+        "value": "cubic-bezier(0.4, 0, 0.2, 1)",
+        "purpose": "Default easing for state transitions (border color, background, shadow)."
+      },
+      {
+        "name": "duration-fast",
+        "value": "0.15s",
+        "purpose": "Button hover, input focus, upload zone activation. Short enough to feel instant."
+      }
+    ],
+    "breakpoints": [
+      { "name": "mobile", "value": "640px" },
+      { "name": "tablet", "value": "768px" },
+      { "name": "desktop", "value": "1024px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The main CTA for each feature panel. Always labeled with an action verb.",
+      "html": "<button class=\"ds-btn-primary\">Analyze fit</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; gap: 8px; background: #0EA5A0; color: #fff; font-family: 'DM Sans', system-ui, sans-serif; font-size: 14px; font-weight: 500; padding: 11px 20px; border: none; border-radius: 8px; cursor: pointer; transition: background 0.15s cubic-bezier(0.4,0,0.2,1); line-height: 1.4; white-space: nowrap; } .ds-btn-primary:hover { background: #0c9490; } .ds-btn-primary:focus-visible { outline: 2px solid #0EA5A0; outline-offset: 2px; box-shadow: 0 0 0 4px rgba(14,165,160,0.2); } .ds-btn-primary:disabled { background: #9ca3af; cursor: not-allowed; }"
+    },
+    {
+      "name": "Primary Button (disabled)",
+      "kind": "button",
+      "refersTo": "button-primary-disabled",
+      "description": "Disabled state — teal never appears, gray communicates unavailability.",
+      "html": "<button class=\"ds-btn-primary-disabled\" disabled>Analyze fit</button>",
+      "css": ".ds-btn-primary-disabled { display: inline-flex; align-items: center; gap: 8px; background: #9ca3af; color: #fff; font-family: 'DM Sans', system-ui, sans-serif; font-size: 14px; font-weight: 500; padding: 11px 20px; border: none; border-radius: 8px; cursor: not-allowed; line-height: 1.4; }"
+    },
+    {
+      "name": "Feature Tab (Selected)",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Hero navigation cards. Selected state: Catalyst border + glow + mist fill.",
+      "html": "<div class=\"ds-feature-tab ds-feature-tab--selected\"><div class=\"ds-feature-tab__icon\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"26\" height=\"26\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#0EA5A0\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z\"/><polyline points=\"14 2 14 8 20 8\"/><line x1=\"16\" y1=\"13\" x2=\"8\" y2=\"13\"/><line x1=\"16\" y1=\"17\" x2=\"8\" y2=\"17\"/><polyline points=\"10 9 9 9 8 9\"/></svg></div><div class=\"ds-feature-tab__title\">Resume Analyzer</div><div class=\"ds-feature-tab__desc\">Get your fit score and keyword gaps.</div></div>",
+      "css": ".ds-feature-tab { background: #fff; border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; padding: 28px; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: box-shadow 0.15s ease, border-color 0.15s ease, background 0.15s ease; } .ds-feature-tab:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.12); border-color: rgba(0,0,0,0.15); } .ds-feature-tab--selected { background: #E1F5EE; border: 2px solid #0EA5A0; box-shadow: 0 0 0 3px rgba(14,165,160,0.1); } .ds-feature-tab__icon { margin-bottom: 12px; } .ds-feature-tab__title { font-family: 'DM Sans', system-ui, sans-serif; font-size: 15px; font-weight: 500; color: #1a1a1a; margin-bottom: 6px; } .ds-feature-tab__desc { font-family: 'DM Sans', system-ui, sans-serif; font-size: 13px; color: #6b6b6b; line-height: 1.5; }"
+    },
+    {
+      "name": "Input Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Standard single-line input with Catalyst focus state.",
+      "html": "<div class=\"ds-field\"><label class=\"ds-label\" for=\"ds-input-example\">Job title</label><input class=\"ds-input\" id=\"ds-input-example\" type=\"text\" placeholder=\"e.g. Senior Product Designer\"></div>",
+      "css": ".ds-field { display: flex; flex-direction: column; gap: 6px; } .ds-label { font-family: 'DM Sans', system-ui, sans-serif; font-size: 13px; font-weight: 500; color: #6b6b6b; letter-spacing: 0.01em; } .ds-input { font-family: 'DM Sans', system-ui, sans-serif; font-size: 14px; color: #1a1a1a; background: #fff; border: 1px solid rgba(0,0,0,0.08); border-radius: 8px; padding: 10px 14px; width: 100%; transition: border-color 0.15s ease, box-shadow 0.15s ease; outline: none; box-sizing: border-box; } .ds-input::placeholder { color: #9b9b9b; } .ds-input:hover { border-color: rgba(0,0,0,0.15); } .ds-input:focus { border-color: #0EA5A0; box-shadow: 0 0 0 3px rgba(14,165,160,0.1); } .ds-input:disabled { background: #F1F0ED; cursor: not-allowed; }"
+    },
+    {
+      "name": "Textarea",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Multi-line text input for job descriptions and resume paste. Same focus treatment as input.",
+      "html": "<div class=\"ds-field\"><label class=\"ds-label\" for=\"ds-textarea-example\">Job Description</label><textarea class=\"ds-textarea\" id=\"ds-textarea-example\" placeholder=\"Paste the full job description here...\"></textarea></div>",
+      "css": ".ds-field { display: flex; flex-direction: column; gap: 6px; } .ds-label { font-family: 'DM Sans', system-ui, sans-serif; font-size: 13px; font-weight: 500; color: #6b6b6b; letter-spacing: 0.01em; } .ds-textarea { font-family: 'DM Sans', system-ui, sans-serif; font-size: 14px; color: #1a1a1a; background: #fff; border: 1px solid rgba(0,0,0,0.08); border-radius: 8px; padding: 10px 14px; width: 100%; min-height: 140px; resize: vertical; transition: border-color 0.15s ease, box-shadow 0.15s ease; outline: none; box-sizing: border-box; line-height: 1.6; } .ds-textarea::placeholder { color: #9b9b9b; } .ds-textarea:hover { border-color: rgba(0,0,0,0.15); } .ds-textarea:focus { border-color: #0EA5A0; box-shadow: 0 0 0 3px rgba(14,165,160,0.1); }"
+    },
+    {
+      "name": "Navigation",
+      "kind": "nav",
+      "refersTo": null,
+      "description": "Sticky top bar. Brand mark left, dark mode toggle right.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav__brand\" href=\"#\">Career<span class=\"ds-nav__brand-ai\">AI</span></a><button class=\"ds-nav__toggle\" aria-label=\"Toggle dark mode\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"5\"/><line x1=\"12\" y1=\"1\" x2=\"12\" y2=\"3\"/><line x1=\"12\" y1=\"21\" x2=\"12\" y2=\"23\"/><line x1=\"4.22\" y1=\"4.22\" x2=\"5.64\" y2=\"5.64\"/><line x1=\"18.36\" y1=\"18.36\" x2=\"19.78\" y2=\"19.78\"/><line x1=\"1\" y1=\"12\" x2=\"3\" y2=\"12\"/><line x1=\"21\" y1=\"12\" x2=\"23\" y2=\"12\"/><line x1=\"4.22\" y1=\"19.78\" x2=\"5.64\" y2=\"18.36\"/><line x1=\"18.36\" y1=\"5.64\" x2=\"19.78\" y2=\"4.22\"/></svg></button></nav>",
+      "css": ".ds-nav { position: sticky; top: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; height: 60px; background: #fff; border-bottom: 1px solid rgba(0,0,0,0.08); } .ds-nav__brand { font-family: 'DM Serif Display', Georgia, serif; font-size: 22px; font-weight: 400; color: #1a1a1a; text-decoration: none; line-height: 1; } .ds-nav__brand-ai { color: #0EA5A0; } .ds-nav__toggle { display: flex; align-items: center; justify-content: center; background: none; border: none; color: #6b6b6b; cursor: pointer; padding: 6px; border-radius: 8px; transition: background 0.15s ease; } .ds-nav__toggle:hover { background: #F1F0ED; }"
+    },
+    {
+      "name": "Fit Score Display",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "The highest-visibility moment in the product. Score color is semantic — green/amber/red. Shown after analysis completes.",
+      "html": "<div class=\"ds-score\"><div class=\"ds-score__number ds-score--high\">87<span class=\"ds-score__denom\">/100</span></div><div class=\"ds-score__label\">Fit Score</div><div class=\"ds-score__tier\">Strong match</div></div>",
+      "css": ".ds-score { display: flex; flex-direction: column; align-items: center; gap: 4px; } .ds-score__number { font-family: 'DM Serif Display', Georgia, serif; font-size: 64px; font-weight: 400; line-height: 1; display: flex; align-items: baseline; gap: 4px; } .ds-score__denom { font-size: 24px; color: #9b9b9b; font-family: 'DM Serif Display', Georgia, serif; } .ds-score--high { color: #0F6E56; } .ds-score--medium { color: #854F0B; } .ds-score--low { color: #A32D2D; } .ds-score__label { font-family: 'DM Sans', system-ui, sans-serif; font-size: 13px; font-weight: 500; color: #6b6b6b; letter-spacing: 0.01em; text-transform: uppercase; } .ds-score__tier { font-family: 'DM Sans', system-ui, sans-serif; font-size: 14px; color: #6b6b6b; }"
+    },
+    {
+      "name": "File Upload Zone",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "Resume drop target. Dashed at rest, Catalyst fill when active.",
+      "html": "<div class=\"ds-upload\"><input type=\"file\" class=\"ds-upload__input\" id=\"ds-upload\" accept=\".pdf,.txt\"><label class=\"ds-upload__label\" for=\"ds-upload\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#9b9b9b\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4\"/><polyline points=\"17 8 12 3 7 8\"/><line x1=\"12\" y1=\"3\" x2=\"12\" y2=\"15\"/></svg><span class=\"ds-upload__text\">Drag &amp; drop or click to upload</span><small class=\"ds-upload__hint\">PDF or TXT · Max 5MB</small></label></div>",
+      "css": ".ds-upload { position: relative; } .ds-upload__input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; } .ds-upload__label { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 24px; border: 2px dashed rgba(0,0,0,0.2); border-radius: 12px; background: #fff; cursor: pointer; transition: border-color 0.15s ease, background 0.15s ease; text-align: center; } .ds-upload__label:hover { border-color: rgba(0,0,0,0.3); } .ds-upload__label.active { border: 2px solid #0EA5A0; border-style: solid; background: #E1F5EE; } .ds-upload__text { font-family: 'DM Sans', system-ui, sans-serif; font-size: 14px; color: #6b6b6b; font-weight: 500; } .ds-upload__hint { font-family: 'DM Sans', system-ui, sans-serif; font-size: 12px; color: #9b9b9b; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Career Launchpad",
+    "overview": "CareerAI's design is built around forward momentum. Where most productivity tools are passive and neutral, CareerAI is propulsive — every screen is a preparation phase, and the interface knows it. The visual language is confident without being aggressive: warm surfaces keep it human, sharp detail keeps it precise, and the Catalyst accent marks every point where progress happens.\n\nThe typography pairing is the spine of this system. DM Serif Display carries authority — it appears on brand marks, hero moments, and the fit score readout where a user meets their competitive reality. DM Sans carries everything else with efficient clarity. Together they create the feeling of a highly capable system that still respects the emotional weight of a job search.\n\nDepth is structural, not decorative. Cards use light diffuse shadows to establish foreground hierarchy. The only color-based depth signal is the Catalyst glow on selected states — a precise, momentary burst of energy that confirms the user has activated a step in the sequence.",
+    "keyCharacteristics": [
+      "Propulsive: the design moves the user forward through a defined sequence",
+      "Warm precision: warm off-white foundation offsets any clinical feel from tight layout and exact type",
+      "Catalyst restraint: the accent color appears only where action or progress occurs",
+      "Serif authority / sans clarity: the two fonts never compete; each owns its layer",
+      "Data-forward: semantic color surfaces appear only for real feedback data"
+    ],
+    "rules": [
+      {
+        "name": "The Catalyst Rule",
+        "body": "The Catalyst accent (#0EA5A0) is reserved for interactive elements and active data states. It never appears as decoration, background wash, or purely informational text. Three Catalyst marks on one screen is approaching the limit.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Palette Rule",
+        "body": "Dark mode uses the same semantic hue roles at adjusted lightness. No new colors are introduced in dark mode — the system shifts values, not vocabulary.",
+        "section": "colors"
+      },
+      {
+        "name": "The Launch-then-Land Rule",
+        "body": "Serif type launches a section — hero, brand mark, fit score. Sans lands it — instructions, labels, actions, output. Never use DM Serif Display for body text, and never place both fonts at the same visual weight within a single component.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat-at-Rest Rule",
+        "body": "Every surface except the card container is flat at rest. Shadows appear to establish foreground hierarchy (Lift) or to confirm an active state (Catalyst Glow). Neither is decorative.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do use DM Serif Display exclusively for the hero heading, brand mark, section titles, and the fit score readout.",
+      "Do apply the Catalyst accent (#0EA5A0) only to primary CTAs, selected states, active zones, and score indicators.",
+      "Do signal selected or active state with the combination of a 2px solid Catalyst border and the Catalyst Glow shadow (0 0 0 3px rgba(14,165,160,0.1)).",
+      "Do use the semantic surface pairs (success / risk / caution) exclusively for data feedback.",
+      "Do write all button labels and CTAs as action verbs with direct objects.",
+      "Do keep all feature panel content within a max width of 860px, centered."
+    ],
+    "donts": [
+      "Don't use DM Serif Display below 18px or in instructional body copy.",
+      "Don't apply the Catalyst color to decorative elements, background washes, or non-interactive text.",
+      "Don't introduce a third typeface, a second accent color, or additional radius values.",
+      "Don't use the success/risk/caution surface colors for informational hierarchy or marketing purposes.",
+      "Don't exceed the 860px content max-width inside any feature panel.",
+      "Don't use generic placeholder text — every input has a specific task context."
+    ]
+  }
+}
